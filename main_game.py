@@ -7,7 +7,13 @@ from curses import wrapper
 menu = ["Play Typing Game", "Tell Me A Dad Joke", "Exit"] 
 
 def fetch_joke():
-    return requests.get("https://icanhazdadjoke.com/", headers={"Accept": "text/plain"}).content.decode('U8')
+    while True:
+        joke = requests.get("https://icanhazdadjoke.com/", headers={"Accept": "text/plain"}).content.decode('UTF-8')
+        if "\n" in joke:
+            continue
+        else:
+            return joke
+                
 
 def print_menu(stdscr, selected):
     stdscr.clear()
@@ -60,13 +66,18 @@ def home_screen(stdscr):
         key = stdscr.getch()
         if key == curses.KEY_UP and current_row > 0:
             current_row -= 1
-        elif key == curses.KEY_DOWN and current_row < 1:
+        elif key == curses.KEY_DOWN and current_row < 2:
             current_row += 1
         elif key == curses.KEY_ENTER or key in [10,13]:
             if current_row == 0:
                 wpm_test(stdscr)
                 while(True):
-                    stdscr.addstr(2, 0, "Congrats on completing the text! Press any key to conitnue or press escape to quit." )
+                    height, width = stdscr.getmaxyx()
+                    congrats = "Congrats on completing the text! Press any key to conitnue or press escape to quit."
+                    x = width // 2 - len(congrats) // 2
+                    y = height // 2
+                    
+                    stdscr.addstr(y - 3, x, congrats)
                     key = stdscr.getkey()
                     
                     if ord(key) == 27:
@@ -127,7 +138,10 @@ def wpm_test(stdscr):
             if len(current_text) > 0:
                 current_text.pop()
         elif len(current_text) < len(target):
-            current_text.append(key)
+            if key in ("KEY_ENTER","\n", "\r"):
+                current_text.append("")
+            else:
+                current_text.append(key)
         
         
 def main(stdscr):
